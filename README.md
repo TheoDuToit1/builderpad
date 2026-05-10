@@ -16,6 +16,7 @@ A React application powered by Gemini AI, built with Vite, TypeScript, and Tailw
 - 📁 File uploads and management
 - 🔐 Secure credentials storage for API keys and login details
 - 🔗 Project sharing capabilities
+- 📊 Interactive flowchart & diagram builder with drag-and-drop nodes
 
 ## Prerequisites
 
@@ -94,6 +95,29 @@ Vercel will automatically detect the Vite configuration and deploy your app.
 - **AI:** Google Gemini AI
 - **Routing:** React Router
 - **State Management:** LocalForage for persistence
+- **Diagrams:** React Flow for interactive flowcharts
+
+## Diagram Builder
+
+The integrated diagram builder allows you to create:
+
+- **Flowcharts** - Map out application logic and user flows
+- **Architecture Diagrams** - Visualize system components and their relationships
+- **Process Flows** - Document workflows and business processes
+- **Decision Trees** - Plan conditional logic and branching paths
+
+### Node Types:
+- 🟢 **Start/End** - Oval nodes for flow entry/exit points
+- 🔵 **Process** - Rectangle nodes for actions and operations
+- 🟡 **Decision** - Diamond nodes for conditional branching
+- 🟠 **Note** - Dashed boxes for comments and annotations
+
+### Features:
+- Drag and drop nodes to reposition
+- Connect nodes with arrows to show flow
+- Pan and zoom to navigate large diagrams
+- Auto-save to local storage
+- Export diagrams (coming soon)
 
 ## License
 

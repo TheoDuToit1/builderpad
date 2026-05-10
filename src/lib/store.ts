@@ -92,6 +92,7 @@ export function useProjects() {
       todos: [],
       files: [],
       credentials: [],
+      diagrams: [],
       createdAt: Date.now(),
       updatedAt: Date.now()
     };

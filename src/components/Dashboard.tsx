@@ -74,6 +74,7 @@ export function Dashboard() {
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> {p.phases?.length || 0} Phases</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {p.todos?.length || 0} Tasks</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> {p.credentials?.length || 0} Creds</span>
+                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-pink-500"></span> {p.diagrams?.length || 0} Flows</span>
                   </div>
                 </button>
               ))}

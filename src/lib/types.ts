@@ -47,6 +47,34 @@ export interface CredentialKey {
   isVisible: boolean;
 }
 
+export interface DiagramNode {
+  id: string;
+  type: 'process' | 'decision' | 'start' | 'end' | 'note' | 'database' | 'api' | 'function' | 'io' | 'text';
+  position: { x: number; y: number };
+  data: {
+    label: string;
+    color?: string;
+  };
+}
+
+export interface DiagramEdge {
+  id: string;
+  source: string;
+  target: string;
+  label?: string;
+  animated?: boolean;
+}
+
+export interface Diagram {
+  id: string;
+  title: string;
+  nodes: DiagramNode[];
+  edges: DiagramEdge[];
+  viewport?: { x: number; y: number; zoom: number };
+  createdAt: number;
+  updatedAt: number;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -56,6 +84,7 @@ export interface Project {
   todos?: Todo[];
   files?: ProjectFile[];
   credentials?: Credential[];
+  diagrams?: Diagram[];
   logo?: string;
   favicon?: string;
   createdAt: number;

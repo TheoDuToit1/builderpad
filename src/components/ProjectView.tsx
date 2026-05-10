@@ -8,12 +8,14 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
   Lock, Unlock, Share2, Type, Subtitles, Grip, CheckSquare, 
   Square, Plus, Trash2, Calendar, FileText, CheckCircle2, 
-  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye, Maximize2, Key, EyeOff
+  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye, Maximize2, Key, EyeOff, Workflow
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Note, Phase, Project, ProjectFile, Todo, Credential, CredentialKey } from '@/lib/types';
+import { Note, Phase, Project, ProjectFile, Todo, Credential, CredentialKey, Diagram, DiagramNode } from '@/lib/types';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
+import { DiagramEditor, NodePalette } from './DiagramEditor';
+import { ReactFlowProvider } from 'reactflow';
 
 export function ProjectView() {
   const { projectId } = useParams();
@@ -21,7 +23,7 @@ export function ProjectView() {
   const { getProject, updateProject, deleteProject } = useProjects();
   const project = projectId ? getProject(projectId) : undefined;
   
-  const [activeTab, setActiveTab] = useState<'notes' | 'phases' | 'todos' | 'files' | 'credentials'>('notes');
+  const [activeTab, setActiveTab] = useState<'notes' | 'phases' | 'todos' | 'files' | 'credentials' | 'diagrams'>('notes');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -215,6 +217,72 @@ export function ProjectView() {
     if (!key) return;
 
     updateCredentialKey(credentialId, keyId, { isVisible: !key.isVisible });
+  };
+
+  // Diagram Management
+  const handleCreateDiagram = () => {
+    const newDiagram: Diagram = {
+      id: uuidv4(),
+      title: 'New Diagram',
+      nodes: [
+        {
+          id: '1',
+          type: 'start',
+          position: { x: 250, y: 50 },
+          data: { label: 'Start' },
+        },
+      ],
+      edges: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    updateProject(project.id, { diagrams: [...(project.diagrams || []), newDiagram] });
+  };
+
+  const updateDiagram = (id: string, updates: Partial<Diagram>) => {
+    updateProject(project.id, {
+      diagrams: (project.diagrams || []).map(d => d.id === id ? { ...d, ...updates, updatedAt: Date.now() } : d)
+    });
+  };
+
+  const deleteDiagram = (id: string) => {
+    setConfirmState({
+      message: "Are you sure you want to delete this diagram?",
+      onConfirm: () => {
+        updateProject(project.id, {
+          diagrams: (project.diagrams || []).filter(d => d.id !== id)
+        });
+      }
+    });
+  };
+
+  const addNodeToDiagram = (diagramId: string, nodeType: 'process' | 'decision' | 'start' | 'end' | 'note' | 'database' | 'api' | 'function' | 'io' | 'text') => {
+    const diagram = (project.diagrams || []).find(d => d.id === diagramId);
+    if (!diagram) return;
+
+    const nodeLabels: Record<string, string> = {
+      process: 'Process',
+      decision: 'Decision',
+      start: 'Start',
+      end: 'End',
+      note: 'Note',
+      database: 'Database',
+      api: 'API',
+      function: 'Function',
+      io: 'Input/Output',
+      text: 'Text',
+    };
+
+    const newNode: DiagramNode = {
+      id: uuidv4(),
+      type: nodeType,
+      position: { x: Math.random() * 400 + 100, y: Math.random() * 300 + 100 },
+      data: { label: nodeLabels[nodeType] },
+    };
+
+    updateDiagram(diagramId, {
+      nodes: [...diagram.nodes, newNode],
+    });
   };
 
   const handleBrandUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
@@ -427,6 +495,18 @@ export function ProjectView() {
           <div className="flex items-center gap-2">
             <Key className="w-4 h-4" />
             Credentials ({(project.credentials || []).length})
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('diagrams')}
+          className={cn(
+            "pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap",
+            activeTab === 'diagrams' ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Workflow className="w-4 h-4" />
+            Diagrams ({(project.diagrams || []).length})
           </div>
         </button>
       </div>
@@ -966,6 +1046,82 @@ export function ProjectView() {
                         >
                           <Plus className="w-3.5 h-3.5" /> Add Key
                         </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+            )}
+          </motion.div>
+        ) : activeTab === 'diagrams' ? (
+          <motion.div
+            key="diagrams"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={handleCreateDiagram}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Plus className="w-4 h-4" /> New Diagram
+              </button>
+            </div>
+
+            {!(project.diagrams && project.diagrams.length > 0) ? (
+               <div className="mt-12 text-center text-gray-400">
+                  <Workflow className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p>No diagrams yet. Create flowcharts, architecture diagrams, or process flows.</p>
+               </div>
+            ) : (
+                <div className="flex flex-col gap-6 mt-4">
+                  <AnimatePresence>
+                    {project.diagrams.map((diagram) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        key={diagram.id}
+                        className="group bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-4">
+                          <input
+                            value={diagram.title}
+                            onChange={(e) => updateDiagram(diagram.id, { title: e.target.value })}
+                            placeholder="Diagram Title (e.g., User Authentication Flow)"
+                            className="font-medium text-gray-900 bg-transparent outline-none w-full placeholder:text-gray-300 text-base"
+                          />
+                          <button
+                            onClick={() => deleteDiagram(diagram.id)}
+                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-opacity hover:bg-red-50 rounded"
+                            title="Delete diagram"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="mb-4">
+                          <NodePalette onAddNode={(nodeType) => addNodeToDiagram(diagram.id, nodeType)} />
+                        </div>
+
+                        <ReactFlowProvider>
+                          <DiagramEditor
+                            diagram={diagram}
+                            onUpdate={(updates) => updateDiagram(diagram.id, updates)}
+                            onAddNode={(nodeType) => addNodeToDiagram(diagram.id, nodeType)}
+                          />
+                        </ReactFlowProvider>
+
+                        <div className="mt-4 flex items-center gap-4 text-xs text-gray-500">
+                          <span>💡 Double-click nodes to edit</span>
+                          <span>•</span>
+                          <span>🔗 Drag from connection points</span>
+                          <span>•</span>
+                          <span>⛶ Fullscreen mode available</span>
+                        </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
