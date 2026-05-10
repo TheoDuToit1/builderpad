@@ -51,11 +51,17 @@ export function ProjectView() {
   }
 
   const handleShare = () => {
-    const token = encodeProjectToToken(project);
-    // Use APP_URL from env if available, otherwise use window.location.origin
-    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
-    const url = `${baseUrl}/share/${token}`;
-    setShareUrl(url);
+    try {
+      const token = encodeProjectToToken(project);
+      // Use APP_URL from env if available, otherwise use window.location.origin
+      const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+      const url = `${baseUrl}/share/${token}`;
+      console.log('Share URL generated:', url);
+      setShareUrl(url);
+    } catch (error) {
+      console.error('Error generating share URL:', error);
+      alert('Failed to generate share link. Please try again.');
+    }
   };
 
   const handleCreateNote = () => {
@@ -789,8 +795,19 @@ export function ProjectView() {
       <AnimatePresence>
         {shareUrl && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/20" onClick={() => setShareUrl(null)} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="bg-white rounded-xl shadow-xl w-full max-w-md relative overflow-hidden flex flex-col p-6">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/20 z-0" 
+              onClick={() => setShareUrl(null)} 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 10 }} 
+              className="bg-white rounded-xl shadow-xl w-full max-w-md relative z-10 overflow-hidden flex flex-col p-6"
+            >
               <div className="flex items-start justify-between mb-4">
                 <h3 className="font-semibold text-gray-900 text-lg">Share Project</h3>
                 <button onClick={() => setShareUrl(null)} className="text-gray-400 hover:text-gray-600 rounded-md p-1"><X className="w-5 h-5" /></button>
@@ -815,8 +832,19 @@ export function ProjectView() {
       <AnimatePresence>
         {confirmState && (
           <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/20" onClick={() => setConfirmState(null)} />
-            <motion.div initial={{ opacity: 0, scale: 0.95, y: 10 }} animate={{ opacity: 1, scale: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95, y: 10 }} className="bg-white rounded-xl shadow-xl w-full max-w-sm relative overflow-hidden flex flex-col p-6 text-center">
+            <motion.div 
+              initial={{ opacity: 0 }} 
+              animate={{ opacity: 1 }} 
+              exit={{ opacity: 0 }} 
+              className="absolute inset-0 bg-black/20 z-0" 
+              onClick={() => setConfirmState(null)} 
+            />
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95, y: 10 }} 
+              animate={{ opacity: 1, scale: 1, y: 0 }} 
+              exit={{ opacity: 0, scale: 0.95, y: 10 }} 
+              className="bg-white rounded-xl shadow-xl w-full max-w-sm relative z-10 overflow-hidden flex flex-col p-6 text-center"
+            >
               <h3 className="font-semibold text-gray-900 text-lg mb-2">Are you sure?</h3>
               <p className="text-sm text-gray-500 mb-6">{confirmState.message}</p>
               <div className="flex gap-2 w-full">
