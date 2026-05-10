@@ -91,6 +91,7 @@ export function useProjects() {
       phases: [],
       todos: [],
       files: [],
+      credentials: [],
       createdAt: Date.now(),
       updatedAt: Date.now()
     };

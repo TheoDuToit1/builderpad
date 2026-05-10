@@ -10,6 +10,12 @@ A React application powered by Gemini AI, built with Vite, TypeScript, and Tailw
 - 🤖 Gemini AI integration
 - 📱 Responsive design
 - 🔄 React Router for navigation
+- 📝 Notes management with Markdown support
+- 📋 Phase tracking for project milestones
+- ✅ To-do lists for task management
+- 📁 File uploads and management
+- 🔐 Secure credentials storage for API keys and login details
+- 🔗 Project sharing capabilities
 
 ## Prerequisites
 

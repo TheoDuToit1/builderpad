@@ -26,12 +26,12 @@ export function Dashboard() {
         transition={{ type: 'spring', damping: 25 }}
         className="w-full"
       >
-        <div className="text-center mb-12">
-          <div className="w-16 h-16 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center mx-auto mb-6">
-            <Layers className="w-8 h-8 text-gray-700" />
+        <div className="text-center mb-16">
+          <div className="w-20 h-20 bg-white border border-gray-100 shadow-sm rounded-2xl flex items-center justify-center mx-auto mb-8">
+            <Layers className="w-10 h-10 text-gray-700" />
           </div>
-          <h1 className="text-3xl font-bold text-gray-900 mb-3 tracking-tight">Welcome to BuilderPad</h1>
-          <p className="text-gray-500 text-lg max-w-lg mx-auto">
+          <h1 className="text-4xl font-bold text-gray-900 mb-4 tracking-tight">Welcome to BuilderPad</h1>
+          <p className="text-gray-500 text-lg max-w-2xl mx-auto leading-relaxed">
             Your fast, local-first workspace. Manage notes, organize phases, and track your to-dos.
           </p>
         </div>
@@ -73,47 +73,52 @@ export function Dashboard() {
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-blue-500"></span> {p.notes?.length || 0} Notes</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-purple-500"></span> {p.phases?.length || 0} Phases</span>
                     <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-emerald-500"></span> {p.todos?.length || 0} Tasks</span>
+                    <span className="flex items-center gap-1"><span className="w-1.5 h-1.5 rounded-full bg-amber-500"></span> {p.credentials?.length || 0} Creds</span>
                   </div>
                 </button>
               ))}
             </div>
           </div>
         ) : isCreating ? (
-          <form onSubmit={handleCreateSubmit} className="max-w-sm mx-auto bg-white p-6 rounded-xl border border-gray-200 shadow-sm">
-            <h3 className="font-semibold text-gray-900 mb-4">Create New Project</h3>
-            <input
-              type="text"
-              autoFocus
-              placeholder="e.g. Side Hustle Dashboard"
-              value={newProjectName}
-              onChange={(e) => setNewProjectName(e.target.value)}
-              className="w-full text-base placeholder:text-gray-400 text-gray-900 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all mb-4"
-            />
-            <div className="flex gap-3">
-               <button
-                 type="button"
-                 onClick={() => setIsCreating(false)}
-                 className="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg transition-colors"
-               >
-                 Cancel
-               </button>
-               <button
-                 type="submit"
-                 disabled={!newProjectName.trim()}
-                 className="flex-1 py-2.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-50 rounded-lg transition-colors"
-               >
-                 Create
-               </button>
-            </div>
-          </form>
+          <div className="flex justify-center">
+            <form onSubmit={handleCreateSubmit} className="w-full max-w-md bg-white p-8 rounded-xl border border-gray-200 shadow-sm">
+              <h3 className="font-semibold text-gray-900 mb-4 text-lg">Create New Project</h3>
+              <input
+                type="text"
+                autoFocus
+                placeholder="e.g. Side Hustle Dashboard"
+                value={newProjectName}
+                onChange={(e) => setNewProjectName(e.target.value)}
+                className="w-full text-base placeholder:text-gray-400 text-gray-900 border border-gray-200 rounded-lg px-4 py-3 outline-none focus:border-gray-900 focus:ring-1 focus:ring-gray-900 transition-all mb-4"
+              />
+              <div className="flex gap-3">
+                <button
+                  type="button"
+                  onClick={() => setIsCreating(false)}
+                  className="flex-1 py-2.5 text-sm font-medium text-gray-600 bg-gray-50 border border-gray-200 hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  Cancel
+                </button>
+                <button
+                  type="submit"
+                  disabled={!newProjectName.trim()}
+                  className="flex-1 py-2.5 text-sm font-medium text-white bg-gray-900 hover:bg-gray-800 disabled:opacity-50 disabled:cursor-not-allowed rounded-lg transition-colors"
+                >
+                  Create
+                </button>
+              </div>
+            </form>
+          </div>
         ) : (
-          <button
-            onClick={() => setIsCreating(true)}
-            className="inline-flex items-center gap-2 bg-gray-900 text-white px-6 py-3.5 rounded-xl font-medium hover:bg-gray-800 focus:ring-4 focus:ring-gray-200 transition-all shadow-md mx-auto"
-          >
-            <Plus className="w-5 h-5" />
-            Create Your First Project
-          </button>
+          <div className="flex justify-center">
+            <button
+              onClick={() => setIsCreating(true)}
+              className="inline-flex items-center gap-2 bg-gray-900 text-white px-8 py-4 rounded-xl font-medium hover:bg-gray-800 focus:ring-4 focus:ring-gray-200 transition-all shadow-md"
+            >
+              <Plus className="w-5 h-5" />
+              Create Your First Project
+            </button>
+          </div>
         )}
       </motion.div>
     </div>

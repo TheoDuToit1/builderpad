@@ -8,10 +8,10 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
   Lock, Unlock, Share2, Type, Subtitles, Grip, CheckSquare, 
   Square, Plus, Trash2, Calendar, FileText, CheckCircle2, 
-  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye, Maximize2
+  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye, Maximize2, Key, EyeOff
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { Note, Phase, Project, ProjectFile, Todo } from '@/lib/types';
+import { Note, Phase, Project, ProjectFile, Todo, Credential, CredentialKey } from '@/lib/types';
 import Markdown from 'react-markdown';
 import remarkGfm from 'remark-gfm';
 
@@ -21,7 +21,7 @@ export function ProjectView() {
   const { getProject, updateProject, deleteProject } = useProjects();
   const project = projectId ? getProject(projectId) : undefined;
   
-  const [activeTab, setActiveTab] = useState<'notes' | 'phases' | 'todos' | 'files'>('notes');
+  const [activeTab, setActiveTab] = useState<'notes' | 'phases' | 'todos' | 'files' | 'credentials'>('notes');
   const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const fileInputRef = useRef<HTMLInputElement>(null);
   const logoInputRef = useRef<HTMLInputElement>(null);
@@ -142,6 +142,79 @@ export function ProjectView() {
     updateProject(project.id, {
        todos: (project.todos || []).filter(t => t.id !== id)
     });
+  };
+
+  // Credential Management
+  const handleCreateCredential = () => {
+    const newCredential: Credential = {
+      id: uuidv4(),
+      title: 'New Credential',
+      keys: [],
+      createdAt: Date.now(),
+      updatedAt: Date.now(),
+    };
+    updateProject(project.id, { credentials: [...(project.credentials || []), newCredential] });
+  };
+
+  const updateCredential = (id: string, updates: Partial<Credential>) => {
+    updateProject(project.id, {
+      credentials: (project.credentials || []).map(c => c.id === id ? { ...c, ...updates, updatedAt: Date.now() } : c)
+    });
+  };
+
+  const deleteCredential = (id: string) => {
+    setConfirmState({
+      message: "Are you sure you want to delete this credential?",
+      onConfirm: () => {
+        updateProject(project.id, {
+          credentials: (project.credentials || []).filter(c => c.id !== id)
+        });
+      }
+    });
+  };
+
+  const addKeyToCredential = (credentialId: string) => {
+    const credential = (project.credentials || []).find(c => c.id === credentialId);
+    if (!credential) return;
+
+    const newKey: CredentialKey = {
+      id: uuidv4(),
+      key: '',
+      value: '',
+      isVisible: false,
+    };
+
+    updateCredential(credentialId, {
+      keys: [...credential.keys, newKey]
+    });
+  };
+
+  const updateCredentialKey = (credentialId: string, keyId: string, updates: Partial<CredentialKey>) => {
+    const credential = (project.credentials || []).find(c => c.id === credentialId);
+    if (!credential) return;
+
+    updateCredential(credentialId, {
+      keys: credential.keys.map(k => k.id === keyId ? { ...k, ...updates } : k)
+    });
+  };
+
+  const deleteCredentialKey = (credentialId: string, keyId: string) => {
+    const credential = (project.credentials || []).find(c => c.id === credentialId);
+    if (!credential) return;
+
+    updateCredential(credentialId, {
+      keys: credential.keys.filter(k => k.id !== keyId)
+    });
+  };
+
+  const toggleKeyVisibility = (credentialId: string, keyId: string) => {
+    const credential = (project.credentials || []).find(c => c.id === credentialId);
+    if (!credential) return;
+
+    const key = credential.keys.find(k => k.id === keyId);
+    if (!key) return;
+
+    updateCredentialKey(credentialId, keyId, { isVisible: !key.isVisible });
   };
 
   const handleBrandUpload = (e: React.ChangeEvent<HTMLInputElement>, type: 'logo' | 'favicon') => {
@@ -342,6 +415,18 @@ export function ProjectView() {
           <div className="flex items-center gap-2">
             <FolderOpen className="w-4 h-4" />
             Files ({(project.files || []).length})
+          </div>
+        </button>
+        <button
+          onClick={() => setActiveTab('credentials')}
+          className={cn(
+            "pb-3 text-sm font-medium transition-colors border-b-2 whitespace-nowrap",
+            activeTab === 'credentials' ? "border-gray-900 text-gray-900" : "border-transparent text-gray-500 hover:text-gray-700"
+          )}
+        >
+          <div className="flex items-center gap-2">
+            <Key className="w-4 h-4" />
+            Credentials ({(project.credentials || []).length})
           </div>
         </button>
       </div>
@@ -650,7 +735,7 @@ export function ProjectView() {
                 </div>
             )}
           </motion.div>
-        ) : (
+        ) : activeTab === 'files' ? (
           <motion.div
             key="files"
             initial={{ opacity: 0, y: 10 }}
@@ -788,7 +873,106 @@ export function ProjectView() {
                 </div>
             )}
           </motion.div>
-        )}
+        ) : activeTab === 'credentials' ? (
+          <motion.div
+            key="credentials"
+            initial={{ opacity: 0, y: 10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -10 }}
+            transition={{ duration: 0.2 }}
+          >
+            <div className="flex items-center justify-between mb-4">
+              <button
+                onClick={handleCreateCredential}
+                className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-md transition-colors"
+              >
+                <Plus className="w-4 h-4" /> New Credential
+              </button>
+            </div>
+
+            {!(project.credentials && project.credentials.length > 0) ? (
+               <div className="mt-12 text-center text-gray-400">
+                  <Key className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                  <p>No credentials yet. Add login details, API keys, or other secrets.</p>
+               </div>
+            ) : (
+                <div className="flex flex-col gap-4 mt-4">
+                  <AnimatePresence>
+                    {project.credentials.map((credential) => (
+                      <motion.div
+                        layout
+                        initial={{ opacity: 0, y: 10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, scale: 0.95 }}
+                        transition={{ duration: 0.2 }}
+                        key={credential.id}
+                        className="group bg-white border border-gray-200 rounded-lg p-4 hover:border-gray-300 transition-colors"
+                      >
+                        <div className="flex items-start justify-between gap-3 mb-3">
+                          <input
+                            value={credential.title}
+                            onChange={(e) => updateCredential(credential.id, { title: e.target.value })}
+                            placeholder="Credential Title (e.g., AWS Account, Database Login)"
+                            className="font-medium text-gray-900 bg-transparent outline-none w-full placeholder:text-gray-300 text-base"
+                          />
+                          <button
+                            onClick={() => deleteCredential(credential.id)}
+                            className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-opacity hover:bg-red-50 rounded"
+                            title="Delete credential"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="space-y-2">
+                          {credential.keys.map((keyItem) => (
+                            <div key={keyItem.id} className="flex items-center gap-2 bg-gray-50 p-2 rounded-md border border-gray-100">
+                              <input
+                                value={keyItem.key}
+                                onChange={(e) => updateCredentialKey(credential.id, keyItem.id, { key: e.target.value })}
+                                placeholder="Key name (e.g., username, api_key)"
+                                className="text-sm text-gray-700 bg-white border border-gray-200 rounded px-2 py-1.5 outline-none focus:border-gray-400 w-1/3 placeholder:text-gray-400"
+                              />
+                              <div className="flex-1 relative">
+                                <input
+                                  type={keyItem.isVisible ? "text" : "password"}
+                                  value={keyItem.value}
+                                  onChange={(e) => updateCredentialKey(credential.id, keyItem.id, { value: e.target.value })}
+                                  placeholder="Value"
+                                  className="text-sm text-gray-700 bg-white border border-gray-200 rounded px-2 py-1.5 pr-8 outline-none focus:border-gray-400 w-full placeholder:text-gray-400"
+                                />
+                                <button
+                                  onClick={() => toggleKeyVisibility(credential.id, keyItem.id)}
+                                  className="absolute right-2 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600 transition-colors"
+                                  title={keyItem.isVisible ? "Hide" : "Show"}
+                                >
+                                  {keyItem.isVisible ? <EyeOff className="w-4 h-4" /> : <Eye className="w-4 h-4" />}
+                                </button>
+                              </div>
+                              <button
+                                onClick={() => deleteCredentialKey(credential.id, keyItem.id)}
+                                className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-colors hover:bg-red-50 rounded"
+                                title="Remove key"
+                              >
+                                <X className="w-4 h-4" />
+                              </button>
+                            </div>
+                          ))}
+                        </div>
+
+                        <button
+                          onClick={() => addKeyToCredential(credential.id)}
+                          className="mt-3 flex items-center gap-1.5 text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
+                        >
+                          <Plus className="w-3.5 h-3.5" /> Add Key
+                        </button>
+                      </motion.div>
+                    ))}
+                  </AnimatePresence>
+                </div>
+            )}
+          </motion.div>
+        ) : null}
       </AnimatePresence>
 
       {/* Share Modal */}

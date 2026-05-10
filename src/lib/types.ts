@@ -32,6 +32,21 @@ export interface ProjectFile {
   createdAt: number;
 }
 
+export interface Credential {
+  id: string;
+  title: string;
+  keys: CredentialKey[];
+  createdAt: number;
+  updatedAt: number;
+}
+
+export interface CredentialKey {
+  id: string;
+  key: string;
+  value: string;
+  isVisible: boolean;
+}
+
 export interface Project {
   id: string;
   name: string;
@@ -40,6 +55,7 @@ export interface Project {
   phases: Phase[];
   todos?: Todo[];
   files?: ProjectFile[];
+  credentials?: Credential[];
   logo?: string;
   favicon?: string;
   createdAt: number;
