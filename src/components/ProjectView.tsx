@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import { useParams, useNavigate } from 'react-router-dom';
 import { motion, AnimatePresence } from 'motion/react';
 import { format } from 'date-fns';
@@ -585,13 +585,13 @@ export function ProjectView() {
                         transition={{ duration: 0.2 }}
                         key={todo.id}
                         className={cn(
-                          "group flex items-center gap-3 p-3 bg-white border rounded-lg transition-colors",
+                          "group flex items-start gap-3 p-3 bg-white border rounded-lg transition-colors",
                           todo.isCompleted ? "border-gray-100 bg-gray-50/50" : "border-gray-200 hover:border-gray-300"
                         )}
                       >
                         <button
                           onClick={() => updateTodo(todo.id, { isCompleted: !todo.isCompleted })}
-                          className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                          className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0 self-start mt-1"
                         >
                           {todo.isCompleted ? (
                             <CheckSquare className="w-5 h-5 text-green-600" />
@@ -601,20 +601,40 @@ export function ProjectView() {
                         </button>
                         
                         <div className="flex-1 min-w-0">
-                          <input
+                          <textarea
                             value={todo.text}
-                            onChange={(e) => updateTodo(todo.id, { text: e.target.value })}
+                            onChange={(e) => {
+                              updateTodo(todo.id, { text: e.target.value });
+                              const target = e.target as HTMLTextAreaElement;
+                              target.style.height = 'auto';
+                              target.style.height = target.scrollHeight + 'px';
+                            }}
                             placeholder="What needs to be done?"
                             className={cn(
-                              "font-medium bg-transparent outline-none w-full placeholder:text-gray-300 transition-all text-sm",
+                              "font-medium bg-transparent outline-none w-full placeholder:text-gray-300 transition-all text-sm resize-none overflow-hidden",
                               todo.isCompleted ? "text-gray-400 line-through" : "text-gray-800"
                             )}
+                            style={{
+                              minHeight: '24px',
+                              height: 'auto'
+                            }}
+                            onFocus={(e) => {
+                              const target = e.target as HTMLTextAreaElement;
+                              target.style.height = 'auto';
+                              target.style.height = target.scrollHeight + 'px';
+                            }}
+                            ref={(el) => {
+                              if (el) {
+                                el.style.height = 'auto';
+                                el.style.height = el.scrollHeight + 'px';
+                              }
+                            }}
                           />
                         </div>
 
                         <button
                           onClick={() => deleteTodo(todo.id)}
-                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-opacity"
+                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-opacity self-start"
                         >
                           <Trash2 className="w-4 h-4" />
                         </button>
