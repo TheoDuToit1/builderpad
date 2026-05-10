@@ -8,7 +8,7 @@ import { v4 as uuidv4 } from 'uuid';
 import { 
   Lock, Unlock, Share2, Type, Subtitles, Grip, CheckSquare, 
   Square, Plus, Trash2, Calendar, FileText, CheckCircle2, 
-  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye
+  LayoutGrid, List, Pencil, FolderOpen, UploadCloud, Download, Image as ImageIcon, File, X, Check, Copy, Link as LinkIcon, Edit3, Eye, Maximize2
 } from 'lucide-react';
 import { cn } from '@/lib/utils';
 import { Note, Phase, Project, ProjectFile, Todo } from '@/lib/types';
@@ -32,6 +32,8 @@ export function ProjectView() {
   const [confirmState, setConfirmState] = useState<{message: string, onConfirm: () => void} | null>(null);
   const [fileToView, setFileToView] = useState<ProjectFile | null>(null);
   const [previewNotes, setPreviewNotes] = useState<Record<string, boolean>>({});
+  const [noteToView, setNoteToView] = useState<Note | null>(null);
+  const [phaseToView, setPhaseToView] = useState<Phase | null>(null);
 
   const toggleNotePreview = (id: string) => {
     setPreviewNotes(prev => ({ ...prev, [id]: !prev[id] }));
@@ -170,9 +172,17 @@ export function ProjectView() {
     const files = e.target.files;
     if (!files || files.length === 0) return;
 
-    Array.from(files).forEach((file: File) => {
+    const fileArray = Array.from(files);
+    const newFiles: ProjectFile[] = [];
+    let processedCount = 0;
+
+    fileArray.forEach((file: File) => {
       if (file.size > 2 * 1024 * 1024) { // 2MB limit per file for localStorage limit safety
         alert(`File ${file.name} is too large. Please upload files under 2MB.`);
+        processedCount++;
+        if (processedCount === fileArray.length && newFiles.length > 0) {
+          updateProject(project.id, { files: [...newFiles, ...(project.files || [])] });
+        }
         return;
       }
 
@@ -187,7 +197,13 @@ export function ProjectView() {
           data: base64Data,
           createdAt: Date.now()
         };
-        updateProject(project.id, { files: [newFile, ...(project.files || [])] });
+        newFiles.push(newFile);
+        processedCount++;
+
+        // Update project only after all files are processed
+        if (processedCount === fileArray.length) {
+          updateProject(project.id, { files: [...newFiles, ...(project.files || [])] });
+        }
       };
       reader.readAsDataURL(file);
     });
@@ -392,6 +408,13 @@ export function ProjectView() {
                            />
                            <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
                              <button
+                               onClick={() => setNoteToView(note)}
+                               className="p-1.5 rounded text-gray-400 hover:text-blue-600 hover:bg-blue-50 transition-colors"
+                               title="Open in popup"
+                             >
+                               <Maximize2 className="w-4 h-4" />
+                             </button>
+                             <button
                                onClick={() => toggleNotePreview(note.id)}
                                className={cn(
                                  "p-1.5 rounded text-gray-400 hover:text-gray-700 hover:bg-gray-100 transition-colors",
@@ -506,12 +529,22 @@ export function ProjectView() {
                           )}
                         </div>
 
-                        <button
-                          onClick={() => deletePhase(phase.id)}
-                          className="opacity-0 group-hover:opacity-100 text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-opacity"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
+                        <div className="flex items-center gap-1 opacity-100 sm:opacity-0 sm:group-hover:opacity-100 transition-opacity">
+                          <button
+                            onClick={() => setPhaseToView(phase)}
+                            className="p-1 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded transition-colors flex-shrink-0"
+                            title="Open in popup"
+                          >
+                            <Maximize2 className="w-4 h-4" />
+                          </button>
+                          <button
+                            onClick={() => deletePhase(phase.id)}
+                            className="text-gray-400 hover:text-red-500 p-1 flex-shrink-0 transition-colors hover:bg-red-50 rounded"
+                            title="Delete phase"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </button>
+                        </div>
                       </motion.div>
                     ))}
                   </AnimatePresence>
@@ -663,6 +696,7 @@ export function ProjectView() {
                 <button
                   onClick={() => fileInputRef.current?.click()}
                   className="flex items-center gap-1.5 text-sm font-medium text-gray-600 hover:text-gray-900 bg-white border border-gray-200 hover:bg-gray-50 px-3 py-1.5 rounded-md transition-colors"
+                  title="Select one or multiple files to upload"
                 >
                   <UploadCloud className="w-4 h-4" /> Upload Files
                 </button>
@@ -813,6 +847,87 @@ export function ProjectView() {
                     <p className="text-sm">No preview available for this file type.</p>
                   </div>
                 )}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Note Viewer Modal */}
+      <AnimatePresence>
+        {noteToView && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setNoteToView(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-2xl relative flex flex-col overflow-hidden max-w-4xl w-full max-h-[90vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <FileText className="w-5 h-5 text-blue-600 shrink-0" />
+                  <h3 className="font-semibold text-lg text-gray-900 truncate">{noteToView.title || 'Untitled Note'}</h3>
+                </div>
+                <button onClick={() => setNoteToView(null)} className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-md transition-colors shrink-0">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-6 sm:p-8">
+                <div className="prose prose-base max-w-none text-gray-700 dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-a:text-blue-600 prose-code:text-pink-600 prose-pre:bg-gray-900">
+                  {noteToView.content ? (
+                    <Markdown remarkPlugins={[remarkGfm]}>{noteToView.content}</Markdown>
+                  ) : (
+                    <p className="text-gray-400 italic">This note is empty.</p>
+                  )}
+                </div>
+              </div>
+              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 font-mono">
+                Updated {format(noteToView.updatedAt, "MMMM d, yyyy 'at' h:mm a")}
+              </div>
+            </motion.div>
+          </div>
+        )}
+      </AnimatePresence>
+
+      {/* Phase Viewer Modal */}
+      <AnimatePresence>
+        {phaseToView && (
+          <div className="fixed inset-0 z-50 flex items-center justify-center p-4 sm:p-8">
+            <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} className="absolute inset-0 bg-black/60" onClick={() => setPhaseToView(null)} />
+            <motion.div initial={{ opacity: 0, scale: 0.95 }} animate={{ opacity: 1, scale: 1 }} exit={{ opacity: 0, scale: 0.95 }} className="bg-white rounded-xl shadow-2xl relative flex flex-col overflow-hidden max-w-3xl w-full max-h-[90vh]">
+              <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100 bg-gray-50">
+                <div className="flex items-center gap-3 min-w-0 flex-1">
+                  <button
+                    onClick={() => {
+                      updatePhase(phaseToView.id, { isDone: !phaseToView.isDone });
+                      setPhaseToView({ ...phaseToView, isDone: !phaseToView.isDone });
+                    }}
+                    className="text-gray-400 hover:text-gray-600 transition-colors flex-shrink-0"
+                  >
+                    {phaseToView.isDone ? (
+                      <CheckSquare className="w-6 h-6 text-green-600" />
+                    ) : (
+                      <Square className="w-6 h-6" />
+                    )}
+                  </button>
+                  <h3 className={cn(
+                    "font-semibold text-lg truncate",
+                    phaseToView.isDone ? "text-gray-400 line-through" : "text-gray-900"
+                  )}>
+                    {phaseToView.title || 'New Phase'}
+                  </h3>
+                </div>
+                <button onClick={() => setPhaseToView(null)} className="p-1.5 text-gray-500 hover:text-gray-900 hover:bg-gray-200 rounded-md transition-colors shrink-0">
+                  <X className="w-5 h-5" />
+                </button>
+              </div>
+              <div className="flex-1 overflow-auto p-6 sm:p-8">
+                <div className="prose prose-base max-w-none text-gray-700 dark:prose-invert prose-headings:font-semibold prose-p:leading-relaxed prose-a:text-blue-600 prose-code:text-pink-600 prose-pre:bg-gray-900">
+                  {phaseToView.content ? (
+                    <Markdown remarkPlugins={[remarkGfm]}>{phaseToView.content}</Markdown>
+                  ) : (
+                    <p className="text-gray-400 italic">No description provided for this phase.</p>
+                  )}
+                </div>
+              </div>
+              <div className="px-6 py-3 border-t border-gray-100 bg-gray-50 text-xs text-gray-500 font-mono">
+                Updated {format(phaseToView.updatedAt, "MMMM d, yyyy 'at' h:mm a")}
               </div>
             </motion.div>
           </div>
