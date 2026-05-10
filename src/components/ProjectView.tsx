@@ -50,7 +50,9 @@ export function ProjectView() {
 
   const handleShare = () => {
     const token = encodeProjectToToken(project);
-    const url = `${window.location.origin}/share/${token}`;
+    // Use APP_URL from env if available, otherwise use window.location.origin
+    const baseUrl = import.meta.env.VITE_APP_URL || window.location.origin;
+    const url = `${baseUrl}/share/${token}`;
     setShareUrl(url);
   };
 
